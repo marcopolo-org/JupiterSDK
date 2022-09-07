@@ -1,8 +1,9 @@
-import { BN, Program, Provider, utils, StateCoder } from "@project-serum/anchor";
+import { BN, Program, Provider, utils, StateCoder, Wallet, BorshAccountsCoder, BorshStateCoder } from "@project-serum/anchor";
 import { getAssociatedTokenAddress, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID } from "@solana/spl-token";
-import { PublicKey, TransactionInstruction, AccountInfo, Connection, SystemProgram, SYSVAR_RENT_PUBKEY } from "@solana/web3.js";
+import { PublicKey, TransactionInstruction, AccountInfo, Connection, SystemProgram, SYSVAR_RENT_PUBKEY, Keypair } from "@solana/web3.js";
 import { IDL, Marcopolo } from "./idl/marcopolo";
 import JSBI from "jsbi";
+import { AnchorProvider } from "@project-serum/anchor/dist/cjs/provider";
 
 
 
@@ -75,6 +76,9 @@ export interface Product {
     v: BN;
 }
 
+export interface MyParams {
+}
+
 interface Amm {
     /* Reserve token mints for the purpose of routing, usually only 2 elements */
     reserveTokenMints: PublicKey[];
@@ -84,12 +88,7 @@ interface Amm {
     createSwapInstructions(swapParams: SwapParams): TransactionInstruction[];
 }
 
-export interface MyParams {
-    xToY: boolean;
-    referrer: PublicKey;
-    referrerSourceTokenAccount: PublicKey;
-    referrerDestinationTokenAccount: PublicKey;
-}
+
 // Implementation preferred constructor params
 export default class MarcoPoloAMM implements Amm {
     public reserveTokenMints: PublicKey[];
@@ -102,14 +101,15 @@ export default class MarcoPoloAMM implements Amm {
     private DEFAULT_DENOMINATOR = new BN(10).pow(new BN(12));
 
 
-    private constructor(
+    constructor(
         address: PublicKey, accountInfo: AccountInfo<Buffer>, params: MyParams
     ) {
-        this.programID =
-            this.poolAddress = address;
-        this.pool = this.decodePoolState(accountInfo);
+        this.programID =this.poolAddress = address;
         this.programIDL = IDL;
-        this.program = new Program(this.programIDL, this.programID);
+        this.program = new Program(this.programIDL, this.programID, new AnchorProvider(new Connection("https://api.mainnet-beta.solana.com"), new Wallet(Keypair.generate()), AnchorProvider.defaultOptions()));
+        this.pool = this.decodePoolState(accountInfo);
+        this.reserveTokenMints = [this.pool.tokenX, this.pool.tokenY];
+        console.log(this.program);
     }
 
     private decodePoolState(accountInfo: AccountInfo<Buffer>) {
