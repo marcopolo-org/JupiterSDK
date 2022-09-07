@@ -1,0 +1,24 @@
+{
+  "name": "jupsdk",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@solana/spl-token": "^0.2.0",
+    "@solana/web3.js": "^1.50.1",
+    "@types/chai": "^4.2.15",
+    "@types/mocha": "^8.2.1",
+    "ts-mocha": "^8.0.0",
+    "typescript": "^4.4.4"
+  },
+  "dependencies": {
+    "@project-serum/anchor": "^0.25.0",
+    "chai": "^4.3.0",
+    "jsbi": "^4.3.0"
+  }
+}
