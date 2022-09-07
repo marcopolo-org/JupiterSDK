@@ -189,7 +189,7 @@ export default class MarcoPoloAMM implements Amm {
                 .add(this.DEFAULT_DENOMINATOR.subn(1))
                 .div(this.DEFAULT_DENOMINATOR),
         };
-        //Gets the amount of fees going to the referrer (Will always be 0, referrer fees are permissionlessly distributed in the swap instruction)
+        //Gets the amount of fees going to the referrer (Will be paid out permissionlessly within the swap instruction)
         let mercantiFeeAmount: Token = {
             v: deltaOut.v
                 .mul(this.pool.mercantiFee.v)
