@@ -6,8 +6,8 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const test = async () => {
-    const poolAddress = new PublicKey("");
-    const connection = new Connection("");
+    const poolAddress = new PublicKey("7ZWeAB277CTSVxSmMxhGr4HM79YL65MVtDe4QTFGDdup");
+    const connection = new Connection(process.env.RPC_URL);
     const poolInfo = await connection.getAccountInfo(poolAddress);
     const MPAmm = new MarcoPoloAMM(poolAddress, poolInfo, {});
 
