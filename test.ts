@@ -2,6 +2,7 @@ import MarcoPoloAMM, { MyParams } from "./jupSDK";
 import { AccountInfo, Connection, PublicKey } from "@solana/web3.js";
 import JSBI from "jsbi";
 import dotenv from "dotenv";
+import { getMint } from "@solana/spl-token";
 dotenv.config();
 
 const test = async () => {
@@ -14,17 +15,20 @@ const test = async () => {
     const updateAccountsInfo = await connection.getMultipleAccountsInfo(accountsToUpdate);
     const updateAMM = MPAmm.update(updateAccountsInfo as AccountInfo<Buffer>[]);
 
-    const tokenIn = new PublicKey("DUSTawucrTsGU8hcqRdHDCbuYhCPADMLM2VcCb8VnFnQ");
-    const tokenOut = new PublicKey("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v");
-    const amount = JSBI.BigInt(10);
+    const tokenIn = new PublicKey("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v");
+    const tokenOut = new PublicKey("DUSTawucrTsGU8hcqRdHDCbuYhCPADMLM2VcCb8VnFnQ");
+    const amount = 10;
+    const tokenInAmount = JSBI.BigInt(amount * (10** (await getMint(connection, tokenIn)).decimals));
+
     const quoteParams = {
         sourceMint: tokenIn,
         destinationMint: tokenOut,
-        amount: amount,
+        amount: tokenInAmount,
         swapMode: ""
     }
     const quote = MPAmm.getQuote(quoteParams);
     console.log(quote);
+    return;
 }
 
 test();

@@ -104,12 +104,12 @@ export default class MarcoPoloAMM implements Amm {
     constructor(
         address: PublicKey, accountInfo: AccountInfo<Buffer>, params: MyParams
     ) {
-        this.programID =this.poolAddress = address;
+        this.programID = this.poolAddress = address;
         this.programIDL = IDL;
         this.program = new Program(this.programIDL, this.programID, new AnchorProvider(new Connection("https://api.mainnet-beta.solana.com"), new Wallet(Keypair.generate()), AnchorProvider.defaultOptions()));
         this.pool = this.decodePoolState(accountInfo);
         this.reserveTokenMints = [this.pool.tokenX, this.pool.tokenY];
-        console.log(this.program);
+        // console.log(this.program);
     }
 
     private decodePoolState(accountInfo: AccountInfo<Buffer>) {
@@ -117,70 +117,93 @@ export default class MarcoPoloAMM implements Amm {
         return pool as PoolStructure;
     }
 
-    private getOutputAmounts(deltaIn: Token, pool: PoolStructure, xToY: boolean): [JSBI, JSBI, number] {
-
+    private getDeltaOut(deltaIn: Token, xToY: boolean) {
         let denominator = xToY
-            ? deltaIn.v.add(pool.tokenXReserve.v)
-            : deltaIn.v.add(pool.tokenYReserve.v);
+            ? deltaIn.v.add(this.pool.tokenXReserve.v)
+            : deltaIn.v.add(this.pool.tokenYReserve.v);
 
-        let fraction = pool.constK.v.div(denominator);
+        let fraction = this.pool.constK.v.div(denominator);
         let deltaOut = {
             v: xToY
-                ? pool.tokenYReserve.v.sub(fraction)
-                : pool.tokenXReserve.v.sub(fraction)
+                ? this.pool.tokenYReserve.v.sub(fraction)
+                : this.pool.tokenXReserve.v.sub(fraction)
         };
-
+        return deltaOut;
+    }
+    private getFeeAmountAndPct(deltaOut: Token, xToY: boolean): [BN, number] {
         let lpFeeAmount: Token = {
             v: deltaOut.v
-                .mul(pool.lpFee.v)
+                .mul(this.pool.lpFee.v)
                 .add(this.DEFAULT_DENOMINATOR.subn(1))
                 .div(this.DEFAULT_DENOMINATOR),
         };
         let buybackFeeAmount: Token = {
             v: deltaOut.v
-                .mul(pool.buybackFee.v)
+                .mul(this.pool.buybackFee.v)
                 .add(this.DEFAULT_DENOMINATOR.subn(1))
                 .div(this.DEFAULT_DENOMINATOR),
         };
         let projectFeeAmount: Token = {
             v: deltaOut.v
-                .mul(pool.projectFee.v)
+                .mul(this.pool.projectFee.v)
                 .add(this.DEFAULT_DENOMINATOR.subn(1))
                 .div(this.DEFAULT_DENOMINATOR),
         };
         let mercantiFeeAmount: Token = {
             v: deltaOut.v
-                .mul(pool.mercantiFee.v)
+                .mul(this.pool.mercantiFee.v)
                 .add(this.DEFAULT_DENOMINATOR.subn(1))
                 .div(this.DEFAULT_DENOMINATOR),
         };
 
+        const totalFeeAmount = lpFeeAmount.v.add(buybackFeeAmount.v).add(projectFeeAmount.v).add(mercantiFeeAmount.v);
+        console.log("totalFeeAmount", totalFeeAmount.toNumber());
         if (
-            lpFeeAmount.v
-                .add(buybackFeeAmount.v)
-                .add(projectFeeAmount.v)
-                .add(mercantiFeeAmount.v)
+            totalFeeAmount
                 .gt(deltaOut.v)
         ) {
             throw new Error("Fees exceed deltaOut");
         }
-
-        const totalFeeAmount = lpFeeAmount.v.add(buybackFeeAmount.v).add(projectFeeAmount.v).add(mercantiFeeAmount.v);
-        const outAmount = JSBI.BigInt(deltaOut.v.sub(totalFeeAmount).toString());
         const feePct = totalFeeAmount.toNumber() / deltaOut.v.toNumber();
-        return [outAmount, JSBI.BigInt(totalFeeAmount.toString()), feePct];
+        console.log("feePct", feePct);
+        return [totalFeeAmount, feePct];
     }
 
-    private calculatePriceImpact(deltaIn: Token, price: number, xToY: boolean) {
-        const fromTokenSwap = deltaIn.v.toNumber();
-        const toTokenSwap = (price * deltaIn.v.toNumber());
-        const rawPoolTokenXReserveDelta = xToY ? this.pool.tokenXReserve.v.toNumber() + (fromTokenSwap) : Math.max((this.pool.tokenXReserve.v.toNumber() - (toTokenSwap)), 0);
-        const rawPoolTokenYeserveDelta = xToY ? Math.max((this.pool.tokenYReserve.v.toNumber() - (toTokenSwap)), 0) : (this.pool.tokenYReserve.v.toNumber() + (fromTokenSwap));
-        const poolTokenXReserveDelta = { v: (new BN(rawPoolTokenXReserveDelta)) };
-        const poolTokenYReserveDelta = { v: (new BN(rawPoolTokenYeserveDelta)) };
-        const priceAfterSwap = Math.max((Math.pow(this.calculatePrice(poolTokenXReserveDelta, poolTokenYReserveDelta).v.toNumber(), xToY ? 1 : -1)), 0);
-        const priceDelta = Math.min((((price - priceAfterSwap) / price) * 100), 100);
-        return priceDelta;
+    private calculatePriceImpact(deltaIn: Token, deltaOut: Token, initialPrice: FixedPoint, xToY: boolean) {
+
+
+        const fromTokenSwap = deltaIn;
+        const toTokenSwap = deltaOut;
+        console.log("fromTokenSwap", fromTokenSwap.v.toNumber());
+        console.log("toTokenSwap", toTokenSwap.v.toNumber());
+
+        const rawPoolTokenXReserveDelta = xToY ? this.pool.tokenXReserve.v.add(fromTokenSwap.v) : BN.max((this.pool.tokenXReserve.v.sub(toTokenSwap.v)), new BN(0));
+        console.log("rawPoolTokenXReserveDelta", rawPoolTokenXReserveDelta.toNumber());
+
+        const rawPoolTokenYeserveDelta = xToY ? BN.max((this.pool.tokenYReserve.v.sub(toTokenSwap.v)), new BN(0)) : (this.pool.tokenYReserve.v.add(fromTokenSwap.v));
+
+        console.log("rawPoolTokenYeserveDelta", rawPoolTokenYeserveDelta.toNumber());
+
+        const poolTokenXReserveDelta = { v: rawPoolTokenXReserveDelta };
+        const poolTokenYReserveDelta = { v: rawPoolTokenYeserveDelta };
+
+        console.log("poolTokenXReserveDelta", poolTokenXReserveDelta.v.toNumber());
+        console.log("poolTokenYReserveDelta", poolTokenYReserveDelta.v.toNumber());
+
+        console.log("priceBeforeSwap", initialPrice.v.toNumber());
+
+        const priceAfterSwap = BN.max(this.calculatePrice(poolTokenXReserveDelta, poolTokenYReserveDelta).v, new BN(0));
+        console.log("priceAfterSwap", priceAfterSwap.toNumber());
+
+
+        const priceDelta =(initialPrice.v.sub(priceAfterSwap).toNumber());
+        console.log("priceDelta", priceDelta);
+
+        const priceImpactRaw = priceDelta / initialPrice.v.toNumber();
+        console.log("priceImpactRaw", priceImpactRaw);
+        const priceImpactPct = Math.min((priceImpactRaw*100), 100);
+        console.log("priceImpactPercent", priceImpactPct);
+        return priceImpactPct;
     }
     private calculatePrice(
         tokenXReserve: Token,
@@ -191,8 +214,71 @@ export default class MarcoPoloAMM implements Amm {
         };
     };
 
+    private getYAmount = (xAmount: Token, price: FixedPoint): Token => {
+        return { v: xAmount.v.mul(price.v).div(this.DEFAULT_DENOMINATOR) };
+    };
+
+    private getXAmount = (yAmount: Token, price: FixedPoint): Token => {
+        return { v: yAmount.v.mul(this.DEFAULT_DENOMINATOR).div(price.v) };
+    };
     public getAccountsForUpdate(): PublicKey[] {
         return [this.poolAddress];
+    }
+
+    public getQuote(quoteParams: QuoteParams): Quote {
+
+        console.log("quoteParams", quoteParams);
+
+        const { sourceMint, destinationMint, amount, swapMode } = quoteParams;
+        const { tokenX, tokenY, tokenXReserve, tokenYReserve } = this.pool;
+        console.log({
+            tokenX: tokenX.toString(),
+            tokenY: tokenY.toString(),
+            tokenXReserve: tokenXReserve.v.toString(),
+            tokenYReserve: tokenYReserve.v.toString()
+        });
+
+        const xToY = sourceMint.equals(tokenX);
+        const sourceReserve = xToY ? tokenXReserve : tokenYReserve;
+        const destinationReserve = xToY ? tokenXReserve : tokenYReserve;
+        const initialPrice = this.calculatePrice(tokenXReserve, tokenYReserve);
+        const deltaIn = { v: new BN(amount.toString()) };
+
+        const deltaOut = this.getDeltaOut(deltaIn, xToY);
+
+        console.log("Price", initialPrice.v.toNumber());
+        console.log("deltaIn", deltaIn.v.toNumber());
+        console.log("deltaOut", deltaOut.v.toNumber());
+
+        const [feeAmount, feePct] = this.getFeeAmountAndPct(deltaOut, xToY);
+        const outAmount = JSBI.BigInt(deltaOut.v.sub(feeAmount).toString());
+
+        console.log("OutAmount", outAmount.toString());
+
+        const notEnoughLiquidity = deltaOut.v.gt(destinationReserve.v);
+        if (notEnoughLiquidity) {
+            return {
+                notEnoughLiquidity: notEnoughLiquidity,
+                inAmount: amount,
+                outAmount: JSBI.BigInt(0),
+                feeAmount: JSBI.BigInt(0),
+                feeMint: destinationMint,
+                feePct: 0,
+                priceImpactPct: 0,
+            } as Quote;
+        }
+
+        const priceImpactPct = this.calculatePriceImpact(deltaIn, deltaOut, initialPrice, xToY);
+        console.log("priceImpactPct", priceImpactPct);
+        return {
+            notEnoughLiquidity: notEnoughLiquidity,
+            inAmount: amount,
+            outAmount: outAmount,
+            feeAmount: feeAmount,
+            feeMint: destinationMint,
+            feePct: feePct,
+            priceImpactPct: priceImpactPct,
+        }
     }
 
     public update(accountInfoMap: AccountInfo<Buffer>[]): void {
@@ -207,41 +293,6 @@ export default class MarcoPoloAMM implements Amm {
         //     }
         //     return tokenAccount;
         //   });
-    }
-
-    public getQuote(quoteParams: QuoteParams): Quote {
-        const { sourceMint, destinationMint, amount, swapMode } = quoteParams;
-        const { tokenX, tokenY, tokenXReserve, tokenYReserve } = this.pool;
-
-        const xToY = sourceMint.equals(tokenX);
-        const sourceReserve = xToY ? tokenXReserve : tokenYReserve;
-        const destinationReserve = xToY ? tokenXReserve : tokenYReserve;
-        const price = Math.pow(this.calculatePrice(tokenXReserve, tokenYReserve).v.toNumber(), xToY ? 1 : -1);
-        const deltaIn = { v: new BN(amount.toString()) };
-
-        const notEnoughLiquidity = deltaIn.v.toNumber() * price > destinationReserve.v.toNumber();
-        if (notEnoughLiquidity) {
-            return {
-                notEnoughLiquidity: notEnoughLiquidity,
-                inAmount: amount,
-                outAmount: JSBI.BigInt(0),
-                feeAmount: JSBI.BigInt(0),
-                feeMint: destinationMint,
-                feePct: 0,
-                priceImpactPct: 0,
-            } as Quote;
-        }
-        const [outAmount, feeAmount, feePct] = this.getOutputAmounts(deltaIn, this.pool, xToY);
-        const priceImpactPct = this.calculatePriceImpact(deltaIn, price, xToY);
-        return {
-            notEnoughLiquidity: notEnoughLiquidity,
-            inAmount: amount,
-            outAmount: outAmount,
-            feeAmount: feeAmount,
-            feeMint: destinationMint,
-            feePct: feePct,
-            priceImpactPct: priceImpactPct,
-        }
     }
 
     public createSwapInstructions(swapParams: SwapParams): TransactionInstruction[] {
