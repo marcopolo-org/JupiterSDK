@@ -220,40 +220,33 @@ export default class MarcoPoloAMM implements Amm {
     private calculatePriceImpact(deltaIn: Token, deltaOut: Token, initialPrice: FixedPoint, xToY: boolean) {
 
 
-        const fromTokenSwap = deltaIn;
-        const toTokenSwap = deltaOut;
-        // console.log("fromTokenSwap", fromTokenSwap.v.toNumber());
-        // console.log("toTokenSwap", toTokenSwap.v.toNumber());
-
         // console.log("Current Pool Token X Reserve", this.pool.tokenXReserve.v.toNumber());
         // console.log("Current Pool Token Y Reserve", this.pool.tokenYReserve.v.toNumber());
 
-        const rawPoolTokenXReserveDelta = xToY ? this.pool.tokenXReserve.v.add(fromTokenSwap.v) : BN.max((this.pool.tokenXReserve.v.sub(toTokenSwap.v)), new BN(0));
-        // console.log("rawPoolTokenXReserveDelta", rawPoolTokenXReserveDelta.toNumber());
 
-        const rawPoolTokenYeserveDelta = xToY ? BN.max((this.pool.tokenYReserve.v.sub(toTokenSwap.v)), new BN(0)) : (this.pool.tokenYReserve.v.add(fromTokenSwap.v));
-
-        // console.log("rawPoolTokenYeserveDelta", rawPoolTokenYeserveDelta.toNumber());
-
-        const poolTokenXReserveDelta = { v: rawPoolTokenXReserveDelta };
-        const poolTokenYReserveDelta = { v: rawPoolTokenYeserveDelta };
+        // Calculates the difference in pool reserves, depending on whether it's a tokenX to tokenY swap, or a tokenX to tokenY swap
+        const poolTokenXReserveDelta = { v: xToY ? this.pool.tokenXReserve.v.add(deltaIn.v) : BN.max((this.pool.tokenXReserve.v.sub(deltaOut.v)), new BN(0)) };
+        const poolTokenYReserveDelta = { v: xToY ? BN.max((this.pool.tokenYReserve.v.sub(deltaOut.v)), new BN(0)) : (this.pool.tokenYReserve.v.add(deltaIn.v)) };
 
         // console.log("poolTokenXReserveDelta", poolTokenXReserveDelta.v.toNumber());
         // console.log("poolTokenYReserveDelta", poolTokenYReserveDelta.v.toNumber());
-
         // console.log("priceBeforeSwap", initialPrice.v.toNumber());
 
+        // Calculates the new price of the pool if the swap took place, depending on whether it's a tokenX to tokenY swap, or a tokenX to tokenY swap
         const priceAfterSwap = BN.max(this.calculatePrice(poolTokenXReserveDelta, poolTokenYReserveDelta).v, new BN(0));
         // console.log("priceAfterSwap", priceAfterSwap.toNumber());
 
 
+        // Calculates the raw price delta, which is the difference between the initial price and the price after the swap
         const priceDelta = Math.abs((initialPrice.v.sub(priceAfterSwap).toNumber()));
         // console.log("priceDelta", priceDelta);
 
+        // Calculates the price impact as a decimal of the initial price
         const priceImpactRaw = priceDelta / initialPrice.v.toNumber();
         // console.log("priceImpactRaw", priceImpactRaw);
+
+        // Converts the price impact decimal into a percent
         const priceImpactPct = Math.min((priceImpactRaw * 100), 100);
-        // console.log("priceImpactPercent", priceImpactPct);
         return priceImpactPct;
     }
 
