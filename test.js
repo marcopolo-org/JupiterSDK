@@ -1,6 +1,10 @@
 import MarcoPoloAMM from "./jupSDK";
 import { Connection, PublicKey } from "@solana/web3.js";
 import JSBI from "jsbi";
+
+import dotenv from "dotenv";
+dotenv.config();
+
 const test = async () => {
     const poolAddress = new PublicKey("");
     const connection = new Connection("");
