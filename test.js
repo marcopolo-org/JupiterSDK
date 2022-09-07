@@ -3,7 +3,7 @@ import { Connection, PublicKey } from "@solana/web3.js";
 import JSBI from "jsbi";
 const test = async () => {
     const poolAddress = new PublicKey("");
-    const connection = new Connection("https://api.devnet.solana.com");
+    const connection = new Connection("");
     const poolInfo = await connection.getAccountInfo(poolAddress);
     const MPAmm = new MarcoPoloAMM(poolAddress, poolInfo, {});
 
@@ -20,8 +20,8 @@ const test = async () => {
         amount: amount,
         swapMode: ""
     }
-    const getQuote = await MPAmm.getQuote(quoteParams);
-
+    const quote = await MPAmm.getQuote(quoteParams);
+    console.log(quote);
 }
 
 test();

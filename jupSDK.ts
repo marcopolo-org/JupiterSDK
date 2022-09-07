@@ -213,10 +213,9 @@ export default class MarcoPoloAMM implements Amm {
         const { sourceMint, destinationMint, amount, swapMode } = quoteParams;
         const { tokenX, tokenY, tokenXReserve, tokenYReserve } = this.pool;
 
-
-        const sourceReserve = sourceMint.equals(tokenX) ? tokenXReserve : tokenYReserve;
-        const destinationReserve = destinationMint.equals(tokenX) ? tokenXReserve : tokenYReserve;
         const xToY = sourceMint.equals(tokenX);
+        const sourceReserve = xToY ? tokenXReserve : tokenYReserve;
+        const destinationReserve = xToY ? tokenXReserve : tokenYReserve;
         const price = Math.pow(this.calculatePrice(tokenXReserve, tokenYReserve).v.toNumber(), xToY ? 1 : -1);
         const deltaIn = { v: new BN(amount.toString()) };
 
@@ -227,7 +226,7 @@ export default class MarcoPoloAMM implements Amm {
                 inAmount: amount,
                 outAmount: JSBI.BigInt(0),
                 feeAmount: JSBI.BigInt(0),
-                feeMint: xToY ? tokenY : tokenX,
+                feeMint: destinationMint,
                 feePct: 0,
                 priceImpactPct: 0,
             } as Quote;
@@ -239,7 +238,7 @@ export default class MarcoPoloAMM implements Amm {
             inAmount: amount,
             outAmount: outAmount,
             feeAmount: feeAmount,
-            feeMint: xToY ? tokenY : tokenX,
+            feeMint: destinationMint,
             feePct: feePct,
             priceImpactPct: priceImpactPct,
         }
