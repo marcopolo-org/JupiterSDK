@@ -137,7 +137,6 @@ export default class MarcoPoloAMM implements Amm {
         this.program = new Program(this.programIDL, this.programID, new AnchorProvider(new Connection("https://api.mainnet-beta.solana.com"), new Wallet(Keypair.generate()), AnchorProvider.defaultOptions()));
         this.pool = this.decodePoolState(accountInfo);
         this.reserveTokenMints = [this.pool.tokenX, this.pool.tokenY];
-        // console.log(this.program);
     }
 
     // ----------------
@@ -199,7 +198,6 @@ export default class MarcoPoloAMM implements Amm {
 
         // Gets the total amount of fees charged by summing the big numbers
         const totalFeeAmount = lpFeeAmount.v.add(buybackFeeAmount.v).add(projectFeeAmount.v).add(mercantiFeeAmount.v);
-        // console.log("totalFeeAmount", totalFeeAmount.toNumber());
 
         // Checks if the totalFeeAmount exceeds the deltaout (Should never happen)
         if (
@@ -211,7 +209,6 @@ export default class MarcoPoloAMM implements Amm {
 
         // Gets the total percent of fees charged by dividing the totalFeeAmount by the deltaOut
         const feePct = totalFeeAmount.toNumber() / deltaOut.v.toNumber();
-        // console.log("feePct", feePct);
         return [totalFeeAmount, feePct];
     }
 
@@ -219,43 +216,24 @@ export default class MarcoPoloAMM implements Amm {
     // Calculates the priceImpact of a swap using the deltaIn and deltaOut, as well as the initial price and whether it's a tokenX to tokenY swap, or a tokenX to tokenY swap
     private calculatePriceImpact(deltaIn: Token, deltaOut: Token, initialPrice: FixedPoint, xToY: boolean) {
 
+        // Calculates the difference in pool reserves, depending on whether it's a tokenX to tokenY swap, or a tokenX to tokenY swap
+        const poolTokenXReserveDelta = { v: xToY ? this.pool.tokenXReserve.v.add(deltaIn.v) : BN.max((this.pool.tokenXReserve.v.sub(deltaOut.v)), new BN(0)) };
+        const poolTokenYReserveDelta = { v: xToY ? BN.max((this.pool.tokenYReserve.v.sub(deltaOut.v)), new BN(0)) : (this.pool.tokenYReserve.v.add(deltaIn.v)) };
 
-        const fromTokenSwap = deltaIn;
-        const toTokenSwap = deltaOut;
-        // console.log("fromTokenSwap", fromTokenSwap.v.toNumber());
-        // console.log("toTokenSwap", toTokenSwap.v.toNumber());
-
-        // console.log("Current Pool Token X Reserve", this.pool.tokenXReserve.v.toNumber());
-        // console.log("Current Pool Token Y Reserve", this.pool.tokenYReserve.v.toNumber());
-
-        const rawPoolTokenXReserveDelta = xToY ? this.pool.tokenXReserve.v.add(fromTokenSwap.v) : BN.max((this.pool.tokenXReserve.v.sub(toTokenSwap.v)), new BN(0));
-        // console.log("rawPoolTokenXReserveDelta", rawPoolTokenXReserveDelta.toNumber());
-
-        const rawPoolTokenYeserveDelta = xToY ? BN.max((this.pool.tokenYReserve.v.sub(toTokenSwap.v)), new BN(0)) : (this.pool.tokenYReserve.v.add(fromTokenSwap.v));
-
-        // console.log("rawPoolTokenYeserveDelta", rawPoolTokenYeserveDelta.toNumber());
-
-        const poolTokenXReserveDelta = { v: rawPoolTokenXReserveDelta };
-        const poolTokenYReserveDelta = { v: rawPoolTokenYeserveDelta };
-
-        // console.log("poolTokenXReserveDelta", poolTokenXReserveDelta.v.toNumber());
-        // console.log("poolTokenYReserveDelta", poolTokenYReserveDelta.v.toNumber());
-
-        // console.log("priceBeforeSwap", initialPrice.v.toNumber());
-
+        // Calculates the new price of the pool if the swap took place, depending on whether it's a tokenX to tokenY swap, or a tokenX to tokenY swap
         const priceAfterSwap = BN.max(this.calculatePrice(poolTokenXReserveDelta, poolTokenYReserveDelta).v, new BN(0));
-        // console.log("priceAfterSwap", priceAfterSwap.toNumber());
 
-
+        // Calculates the raw price delta, which is the difference between the initial price and the price after the swap
         const priceDelta = Math.abs((initialPrice.v.sub(priceAfterSwap).toNumber()));
-        // console.log("priceDelta", priceDelta);
 
+        // Calculates the price impact as a decimal of the initial price
         const priceImpactRaw = priceDelta / initialPrice.v.toNumber();
-        // console.log("priceImpactRaw", priceImpactRaw);
+
+        // Converts the price impact decimal into a percent
         const priceImpactPct = Math.min((priceImpactRaw * 100), 100);
-        // console.log("priceImpactPercent", priceImpactPct);
         return priceImpactPct;
     }
+
 
     // Returns the ratio of pool token Y to pool token X
     private calculatePrice(
@@ -288,26 +266,14 @@ export default class MarcoPoloAMM implements Amm {
 
     // Returns the quote for a swap, given the swap params and the current pool state
     public getQuote(quoteParams: QuoteParams): Quote {
-
-        // console.log("quoteParams", quoteParams);
-
         // Dereferences the quoteParams for easier readability
-        const { sourceMint, destinationMint, amount, swapMode } = quoteParams;
+        const { sourceMint, destinationMint, amount } = quoteParams;
 
         // Dereferences the relevant pool state for easier readability
-        const { tokenX, tokenY, tokenXReserve, tokenYReserve } = this.pool;
-        console.log({
-            tokenX: tokenX.toString(),
-            tokenY: tokenY.toString(),
-            tokenXReserve: tokenXReserve.v.toString(),
-            tokenYReserve: tokenYReserve.v.toString()
-        });
+        const { tokenX, tokenXReserve, tokenYReserve } = this.pool;
 
         // Checks if the swap is an x->y swap or y->x swap by comparing the source mint with the tokenX and tokenY mints
         const xToY = sourceMint.equals(tokenX);
-
-        // console.log("xToY", xToY);
-        const sourceReserve = xToY ? tokenXReserve : tokenYReserve;
 
         // If the swap is an x->y swap, the destination mint is tokenY, and vice versa
         const destinationReserve = xToY ? tokenYReserve: tokenXReserve;
@@ -321,13 +287,7 @@ export default class MarcoPoloAMM implements Amm {
         // Gets the deltaOut of the swap by calculating the amount of destinationToken that will be received
         const deltaOut = this.getDeltaOut(deltaIn, xToY);
 
-        // console.log("Price", initialPrice.v.toNumber());
-        // console.log("deltaIn", deltaIn.v.toNumber());
-        // console.log("deltaOut", deltaOut.v.toNumber());
-
         // Checks if there is enough liquidity in the pool to complete the swap. If not, returns with true and zeroed out state
-        // console.log("sourceReserve", sourceReserve.v.toNumber());
-        // console.log("destinationReserve", destinationReserve.v.toNumber());
         const notEnoughLiquidity = deltaOut.v.gt(destinationReserve.v);
         if (notEnoughLiquidity) {
             return {
@@ -348,11 +308,8 @@ export default class MarcoPoloAMM implements Amm {
         // Calculates the actual out amount of the swap by subtracting the total fee amount from the deltaOut. This does not take slippage into consideration currently.
         const outAmount = JSBI.BigInt(deltaOut.v.sub(feeAmount).toString());
 
-        // console.log("OutAmount", outAmount.toString());
-
         // Calculates the price impact of the swap, can be used to warn the user of the price impact or determine routing. Comes out as a percentage.
         const priceImpactPct = this.calculatePriceImpact(deltaIn, deltaOut, initialPrice, xToY);
-        // console.log("priceImpactPct", priceImpactPct);
         return {
             notEnoughLiquidity: notEnoughLiquidity,
             inAmount: amount,
