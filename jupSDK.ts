@@ -5,10 +5,9 @@ import { IDL, Marcopolo } from "./idl/marcopolo";
 import JSBI from "jsbi";
 import { AnchorProvider } from "@project-serum/anchor/dist/cjs/provider";
 
-
-
-export type TokenMintAddress = PublicKey;
-export type SwapMode = any;
+// ----------------
+//Required types
+// ----------------
 
 export interface QuoteParams {
     sourceMint: PublicKey;
@@ -36,6 +35,17 @@ export interface SwapParams {
     inAmount: JSBI;
 }
 
+export interface MyParams {
+}
+
+// ----------------
+// Custom types
+// ----------------
+
+export type TokenMintAddress = PublicKey;
+export type SwapMode = any;
+
+// Pool state interface
 export interface PoolStructure {
     tokenX: PublicKey;
     tokenY: PublicKey;
@@ -64,10 +74,12 @@ export interface PoolStructure {
     bump: number;
 }
 
+// Standardizes decimals
 export interface FixedPoint {
     v: BN;
 }
 
+// Stores the token amount as a big number
 export interface Token {
     v: BN;
 }
@@ -76,8 +88,7 @@ export interface Product {
     v: BN;
 }
 
-export interface MyParams {
-}
+
 
 interface Amm {
     /* Reserve token mints for the purpose of routing, usually only 2 elements */
@@ -91,15 +102,32 @@ interface Amm {
 
 // Implementation preferred constructor params
 export default class MarcoPoloAMM implements Amm {
+
+    // ----------------
+    // Class variables
+    // ----------------
+
+    // Stores the pubkeys of the tokenX and tokenY mints
     public reserveTokenMints: PublicKey[];
+    // Stores the pool state
     public pool: PoolStructure;
     // public tokenAccounts: PublicKey[];
+
+    // Stores the pool address
     public poolAddress: PublicKey;
+    // Stores the programID
     private programID = new PublicKey("eZtZrTJjHHMguU1PpGhpz6cTfVwYgZVfk18Ao8zxVqR");
+    // Stores the programIDL for decoding the pool state
     private programIDL = IDL;
+    // Stores the program for decoding the pool state
     private program: Program<Marcopolo>;
+    //Stores the default denominator for the price calculation
     private DEFAULT_DENOMINATOR = new BN(10).pow(new BN(12));
 
+
+    // ----------------
+    // Constructor
+    // ----------------
 
     constructor(
         address: PublicKey, accountInfo: AccountInfo<Buffer>, params: MyParams
@@ -112,11 +140,17 @@ export default class MarcoPoloAMM implements Amm {
         // console.log(this.program);
     }
 
+    // ----------------
+    // Custom helper methods
+    // ----------------
+
+    // Decodes the pool account info into a PoolStructure
     private decodePoolState(accountInfo: AccountInfo<Buffer>) {
         const pool = this.program.coder.accounts.decode("pool", accountInfo.data)
         return pool as PoolStructure;
     }
 
+    // Returns the deltaOut given the current pool state and the deltaIn, checking if it's an x->y or y->x swap
     private getDeltaOut(deltaIn: Token, xToY: boolean) {
         let denominator = xToY
             ? deltaIn.v.add(this.pool.tokenXReserve.v)
@@ -130,25 +164,32 @@ export default class MarcoPoloAMM implements Amm {
         };
         return deltaOut;
     }
+
+    // Returns the total amount of fees charged and the total percent of fees charged as a function of the deltaOut
     private getFeeAmountAndPct(deltaOut: Token, xToY: boolean): [BN, number] {
+
+        // Gets the amount of fees going to the Liquidity Providers
         let lpFeeAmount: Token = {
             v: deltaOut.v
                 .mul(this.pool.lpFee.v)
                 .add(this.DEFAULT_DENOMINATOR.subn(1))
                 .div(this.DEFAULT_DENOMINATOR),
         };
+        //Gets the amount of fees going to the Marco Polo Team
         let buybackFeeAmount: Token = {
             v: deltaOut.v
                 .mul(this.pool.buybackFee.v)
                 .add(this.DEFAULT_DENOMINATOR.subn(1))
                 .div(this.DEFAULT_DENOMINATOR),
         };
+        //Gets the amount of fees going to the partnered Project Owner
         let projectFeeAmount: Token = {
             v: deltaOut.v
                 .mul(this.pool.projectFee.v)
                 .add(this.DEFAULT_DENOMINATOR.subn(1))
                 .div(this.DEFAULT_DENOMINATOR),
         };
+        //Gets the amount of fees going to the referrer (Will always be 0, referrer fees are permissionlessly distributed in the swap instruction)
         let mercantiFeeAmount: Token = {
             v: deltaOut.v
                 .mul(this.pool.mercantiFee.v)
@@ -156,19 +197,26 @@ export default class MarcoPoloAMM implements Amm {
                 .div(this.DEFAULT_DENOMINATOR),
         };
 
+        // Gets the total amount of fees charged by summing the big numbers
         const totalFeeAmount = lpFeeAmount.v.add(buybackFeeAmount.v).add(projectFeeAmount.v).add(mercantiFeeAmount.v);
         console.log("totalFeeAmount", totalFeeAmount.toNumber());
+
+        // Checks if the totalFeeAmount exceeds the deltaout (Should never happen)
         if (
             totalFeeAmount
                 .gt(deltaOut.v)
         ) {
             throw new Error("Fees exceed deltaOut");
         }
+
+        // Gets the total percent of fees charged by dividing the totalFeeAmount by the deltaOut
         const feePct = totalFeeAmount.toNumber() / deltaOut.v.toNumber();
         console.log("feePct", feePct);
         return [totalFeeAmount, feePct];
     }
 
+
+    // Calculates the priceImpact of a swap using the deltaIn and deltaOut, as well as the initial price and whether it's a tokenX to tokenY swap, or a tokenX to tokenY swap
     private calculatePriceImpact(deltaIn: Token, deltaOut: Token, initialPrice: FixedPoint, xToY: boolean) {
 
 
@@ -196,15 +244,17 @@ export default class MarcoPoloAMM implements Amm {
         console.log("priceAfterSwap", priceAfterSwap.toNumber());
 
 
-        const priceDelta =(initialPrice.v.sub(priceAfterSwap).toNumber());
+        const priceDelta = (initialPrice.v.sub(priceAfterSwap).toNumber());
         console.log("priceDelta", priceDelta);
 
         const priceImpactRaw = priceDelta / initialPrice.v.toNumber();
         console.log("priceImpactRaw", priceImpactRaw);
-        const priceImpactPct = Math.min((priceImpactRaw*100), 100);
+        const priceImpactPct = Math.min((priceImpactRaw * 100), 100);
         console.log("priceImpactPercent", priceImpactPct);
         return priceImpactPct;
     }
+
+    // Returns the ratio of pool token Y to pool token X
     private calculatePrice(
         tokenXReserve: Token,
         tokenYReserve: Token
@@ -214,22 +264,34 @@ export default class MarcoPoloAMM implements Amm {
         };
     };
 
+    // Returns the amount of tokenY given the current price and amount of tokenX
     private getYAmount = (xAmount: Token, price: FixedPoint): Token => {
         return { v: xAmount.v.mul(price.v).div(this.DEFAULT_DENOMINATOR) };
     };
 
+    // Returns the amount of tokenX given the current price and amount of tokenY
     private getXAmount = (yAmount: Token, price: FixedPoint): Token => {
         return { v: yAmount.v.mul(this.DEFAULT_DENOMINATOR).div(price.v) };
     };
+
+    // ----------------
+    // Required interface methods
+    // ----------------
+
+    // Returns the necessary accounts to fetch (Only the pool, tokenX and tokenY account balances are stored on the pool state)
     public getAccountsForUpdate(): PublicKey[] {
         return [this.poolAddress];
     }
 
+    // Returns the quote for a swap, given the swap params and the current pool state
     public getQuote(quoteParams: QuoteParams): Quote {
 
         console.log("quoteParams", quoteParams);
 
+        // Dereferences the quoteParams for easier readability
         const { sourceMint, destinationMint, amount, swapMode } = quoteParams;
+
+        // Dereferences the relevant pool state for easier readability
         const { tokenX, tokenY, tokenXReserve, tokenYReserve } = this.pool;
         console.log({
             tokenX: tokenX.toString(),
@@ -238,23 +300,27 @@ export default class MarcoPoloAMM implements Amm {
             tokenYReserve: tokenYReserve.v.toString()
         });
 
+        // Checks if the swap is an x->y swap or y->x swap by comparing the source mint with the tokenX and tokenY mints
         const xToY = sourceMint.equals(tokenX);
         const sourceReserve = xToY ? tokenXReserve : tokenYReserve;
+
+        // If the swap is an x->y swap, the destination mint is tokenY, and vice versa
         const destinationReserve = xToY ? tokenXReserve : tokenYReserve;
+
+        // Gets the current price token Y to token X (not affected by the swap direction)
         const initialPrice = this.calculatePrice(tokenXReserve, tokenYReserve);
+
+        // Converts the amount of sourceToken that will be swapped into a usable type
         const deltaIn = { v: new BN(amount.toString()) };
 
+        // Gets the deltaOut of the swap by calculating the amount of destinationToken that will be received
         const deltaOut = this.getDeltaOut(deltaIn, xToY);
 
         console.log("Price", initialPrice.v.toNumber());
         console.log("deltaIn", deltaIn.v.toNumber());
         console.log("deltaOut", deltaOut.v.toNumber());
 
-        const [feeAmount, feePct] = this.getFeeAmountAndPct(deltaOut, xToY);
-        const outAmount = JSBI.BigInt(deltaOut.v.sub(feeAmount).toString());
-
-        console.log("OutAmount", outAmount.toString());
-
+        // Checks if there is enough liquidity in the pool to complete the swap. If not, returns with true and zeroed out state
         const notEnoughLiquidity = deltaOut.v.gt(destinationReserve.v);
         if (notEnoughLiquidity) {
             return {
@@ -268,6 +334,16 @@ export default class MarcoPoloAMM implements Amm {
             } as Quote;
         }
 
+
+        // Calculates the fees of the swap using the deltaOut
+        const [feeAmount, feePct] = this.getFeeAmountAndPct(deltaOut, xToY);
+
+        // Calculates the actual out amount of the swap by subtracting the total fee amount from the deltaOut. This does not take slippage into consideration currently.
+        const outAmount = JSBI.BigInt(deltaOut.v.sub(feeAmount).toString());
+
+        console.log("OutAmount", outAmount.toString());
+
+        // Calculates the price impact of the swap, can be used to warn the user of the price impact or determine routing. Comes out as a percentage.
         const priceImpactPct = this.calculatePriceImpact(deltaIn, deltaOut, initialPrice, xToY);
         console.log("priceImpactPct", priceImpactPct);
         return {
@@ -281,6 +357,7 @@ export default class MarcoPoloAMM implements Amm {
         }
     }
 
+    // Updates the class state with the new pool state
     public update(accountInfoMap: AccountInfo<Buffer>[]): void {
         const [poolAccountInfo] = Object.values(accountInfoMap);
         const pool = this.decodePoolState(poolAccountInfo);

@@ -13,7 +13,7 @@ const test = async () => {
 
     const accountsToUpdate = MPAmm.getAccountsForUpdate();
     const updateAccountsInfo = await connection.getMultipleAccountsInfo(accountsToUpdate);
-    const updateAMM = MPAmm.update(updateAccountsInfo as AccountInfo<Buffer>[]);
+    MPAmm.update(updateAccountsInfo as AccountInfo<Buffer>[]);
 
     const tokenIn = new PublicKey("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v");
     const tokenOut = new PublicKey("DUSTawucrTsGU8hcqRdHDCbuYhCPADMLM2VcCb8VnFnQ");
