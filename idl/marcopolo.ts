@@ -246,6 +246,11 @@ export type Marcopolo = {
       "name": "addTokens",
       "accounts": [
         {
+          "name": "state",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
           "name": "pool",
           "isMut": true,
           "isSigner": false
@@ -271,6 +276,11 @@ export type Marcopolo = {
           "isSigner": false
         },
         {
+          "name": "tokenMarco",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
           "name": "ownerXAccount",
           "isMut": true,
           "isSigner": false
@@ -291,12 +301,62 @@ export type Marcopolo = {
           "isSigner": false
         },
         {
+          "name": "ownerMarcoAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "ownerProjectFirstAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "ownerProjectSecondAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenMarcoAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProjectFirstAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProjectSecondAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
           "name": "owner",
           "isMut": true,
           "isSigner": true
         },
         {
+          "name": "programAuthority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
           "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "associatedTokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rent",
           "isMut": false,
           "isSigner": false
         }
@@ -531,6 +591,11 @@ export type Marcopolo = {
         {
           "name": "tokenY",
           "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenMarco",
+          "isMut": true,
           "isSigner": false
         },
         {
@@ -1135,6 +1200,11 @@ export type Marcopolo = {
           "isSigner": false
         },
         {
+          "name": "tokenMarco",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
           "name": "tokenMarcoAccount",
           "isMut": true,
           "isSigner": false
@@ -1226,6 +1296,21 @@ export type Marcopolo = {
           "isSigner": false
         },
         {
+          "name": "tokenMarcoAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProjectFirstAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProjectSecondAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
           "name": "poolXAccount",
           "isMut": true,
           "isSigner": false
@@ -1242,36 +1327,6 @@ export type Marcopolo = {
         },
         {
           "name": "buybackYAccount",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "tokenMarcoAccount",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "tokenProjectFirstAccount",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "tokenProjectSecondAccount",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "adminMarcoAccount",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "adminProjectFirstAccount",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "adminProjectSecondAccount",
           "isMut": true,
           "isSigner": false
         },
@@ -1364,7 +1419,7 @@ export type Marcopolo = {
         },
         {
           "name": "pool",
-          "isMut": false,
+          "isMut": true,
           "isSigner": false
         },
         {
@@ -1508,6 +1563,97 @@ export type Marcopolo = {
           }
         }
       ]
+    },
+    {
+      "name": "resetFarm",
+      "accounts": [
+        {
+          "name": "state",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "pool",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "farm",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenX",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenY",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenMarco",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenMarcoAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProjectFirstAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProjectSecondAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "adminMarcoAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "adminProjectFirstAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "adminProjectSecondAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "admin",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "programAuthority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
     }
   ],
   "accounts": [
@@ -1562,6 +1708,12 @@ export type Marcopolo = {
           },
           {
             "name": "accumulatedSecondsPerShare",
+            "type": {
+              "defined": "FixedPoint"
+            }
+          },
+          {
+            "name": "offsetSecondsPerShare",
             "type": {
               "defined": "FixedPoint"
             }
@@ -1729,6 +1881,10 @@ export type Marcopolo = {
             }
           },
           {
+            "name": "farmCount",
+            "type": "u64"
+          },
+          {
             "name": "bump",
             "type": "u8"
           }
@@ -1777,6 +1933,10 @@ export type Marcopolo = {
             }
           },
           {
+            "name": "lastWithdrawTime",
+            "type": "u64"
+          },
+          {
             "name": "tokensOwedX",
             "type": {
               "defined": "Token"
@@ -1787,6 +1947,10 @@ export type Marcopolo = {
             "type": {
               "defined": "Token"
             }
+          },
+          {
+            "name": "currentFarmCount",
+            "type": "u64"
           },
           {
             "name": "bump",
@@ -1935,12 +2099,22 @@ export type Marcopolo = {
       "code": 6012,
       "name": "WrongFarm",
       "msg": "Cannot add supply to wrong farm"
+    },
+    {
+      "code": 6013,
+      "name": "RewardsExceedingSupply",
+      "msg": "Cannot withdraw rewards exceeding supply left"
+    },
+    {
+      "code": 6014,
+      "name": "FarmNotEnded",
+      "msg": "Farm has not ended, cannot add additional rewards"
     }
   ],
   "metadata": {
-    "address": "3VEF6N1prCtk8b4DbQRtFL3V81XYcTuLzufVHvNdnnZw"
+    "address": "9tKE7Mbmj4mxDjWatikzGAtkoWosiiZX9y6J4Hfm2R8H"
   }
-}
+};
 
 export const IDL: Marcopolo = {
   "version": "0.1.1",
@@ -2190,6 +2364,11 @@ export const IDL: Marcopolo = {
       "name": "addTokens",
       "accounts": [
         {
+          "name": "state",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
           "name": "pool",
           "isMut": true,
           "isSigner": false
@@ -2215,6 +2394,11 @@ export const IDL: Marcopolo = {
           "isSigner": false
         },
         {
+          "name": "tokenMarco",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
           "name": "ownerXAccount",
           "isMut": true,
           "isSigner": false
@@ -2235,12 +2419,62 @@ export const IDL: Marcopolo = {
           "isSigner": false
         },
         {
+          "name": "ownerMarcoAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "ownerProjectFirstAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "ownerProjectSecondAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenMarcoAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProjectFirstAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProjectSecondAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
           "name": "owner",
           "isMut": true,
           "isSigner": true
         },
         {
+          "name": "programAuthority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
           "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "associatedTokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rent",
           "isMut": false,
           "isSigner": false
         }
@@ -2475,6 +2709,11 @@ export const IDL: Marcopolo = {
         {
           "name": "tokenY",
           "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenMarco",
+          "isMut": true,
           "isSigner": false
         },
         {
@@ -3079,6 +3318,11 @@ export const IDL: Marcopolo = {
           "isSigner": false
         },
         {
+          "name": "tokenMarco",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
           "name": "tokenMarcoAccount",
           "isMut": true,
           "isSigner": false
@@ -3170,6 +3414,21 @@ export const IDL: Marcopolo = {
           "isSigner": false
         },
         {
+          "name": "tokenMarcoAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProjectFirstAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProjectSecondAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
           "name": "poolXAccount",
           "isMut": true,
           "isSigner": false
@@ -3186,36 +3445,6 @@ export const IDL: Marcopolo = {
         },
         {
           "name": "buybackYAccount",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "tokenMarcoAccount",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "tokenProjectFirstAccount",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "tokenProjectSecondAccount",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "adminMarcoAccount",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "adminProjectFirstAccount",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "adminProjectSecondAccount",
           "isMut": true,
           "isSigner": false
         },
@@ -3308,7 +3537,7 @@ export const IDL: Marcopolo = {
         },
         {
           "name": "pool",
-          "isMut": false,
+          "isMut": true,
           "isSigner": false
         },
         {
@@ -3452,6 +3681,97 @@ export const IDL: Marcopolo = {
           }
         }
       ]
+    },
+    {
+      "name": "resetFarm",
+      "accounts": [
+        {
+          "name": "state",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "pool",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "farm",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenX",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenY",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenMarco",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenMarcoAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProjectFirstAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProjectSecondAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "adminMarcoAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "adminProjectFirstAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "adminProjectSecondAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "admin",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "programAuthority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
     }
   ],
   "accounts": [
@@ -3506,6 +3826,12 @@ export const IDL: Marcopolo = {
           },
           {
             "name": "accumulatedSecondsPerShare",
+            "type": {
+              "defined": "FixedPoint"
+            }
+          },
+          {
+            "name": "offsetSecondsPerShare",
             "type": {
               "defined": "FixedPoint"
             }
@@ -3673,6 +3999,10 @@ export const IDL: Marcopolo = {
             }
           },
           {
+            "name": "farmCount",
+            "type": "u64"
+          },
+          {
             "name": "bump",
             "type": "u8"
           }
@@ -3721,6 +4051,10 @@ export const IDL: Marcopolo = {
             }
           },
           {
+            "name": "lastWithdrawTime",
+            "type": "u64"
+          },
+          {
             "name": "tokensOwedX",
             "type": {
               "defined": "Token"
@@ -3731,6 +4065,10 @@ export const IDL: Marcopolo = {
             "type": {
               "defined": "Token"
             }
+          },
+          {
+            "name": "currentFarmCount",
+            "type": "u64"
           },
           {
             "name": "bump",
@@ -3879,9 +4217,19 @@ export const IDL: Marcopolo = {
       "code": 6012,
       "name": "WrongFarm",
       "msg": "Cannot add supply to wrong farm"
+    },
+    {
+      "code": 6013,
+      "name": "RewardsExceedingSupply",
+      "msg": "Cannot withdraw rewards exceeding supply left"
+    },
+    {
+      "code": 6014,
+      "name": "FarmNotEnded",
+      "msg": "Farm has not ended, cannot add additional rewards"
     }
   ],
   "metadata": {
-    "address": "3VEF6N1prCtk8b4DbQRtFL3V81XYcTuLzufVHvNdnnZw"
+    "address": "9tKE7Mbmj4mxDjWatikzGAtkoWosiiZX9y6J4Hfm2R8H"
   }
 };

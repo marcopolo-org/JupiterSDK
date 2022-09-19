@@ -116,7 +116,7 @@ export default class MarcoPoloAMM implements Amm {
     // Stores the pool address
     public poolAddress: PublicKey;
     // Stores the programID
-    private programID = new PublicKey("eZtZrTJjHHMguU1PpGhpz6cTfVwYgZVfk18Ao8zxVqR");
+    private programID = new PublicKey("9tKE7Mbmj4mxDjWatikzGAtkoWosiiZX9y6J4Hfm2R8H");
     // Stores the programIDL for decoding the pool state
     private programIDL = IDL;
     // Stores the program for decoding the pool state
@@ -330,37 +330,7 @@ export default class MarcoPoloAMM implements Amm {
     }
 
     public createSwapInstructions(swapParams: SwapParams): TransactionInstruction[] {
-
-
-        // const stateAddress = new PublicKey("CSeECogtLCCf2B5EVECkEvFaUwJnH2UZYMjJFLQYWLsb");
-        // const poolAddress = this.xToY ? this.getPoolAddress(swapParams.sourceMint, swapParams.destinationMint) : this.getPoolAddress(swapParams.destinationMint, swapParams.sourceMint);
-        // const tokenX = this.xToY ? swapParams.sourceMint : swapParams.destinationMint;
-        // const tokenY = this.xToY ? swapParams.destinationMint : swapParams.sourceMint;
-        // const swapperXAccount = this.xToY ? swapParams.userSourceTokenAccount : swapParams.userDestinationTokenAccount;
-        // const swapperYAccount = this.xToY ? swapParams.userDestinationTokenAccount : swapParams.userSourceTokenAccount;
-        // const programAuthority = new PublicKey("BKWZjWB4jrqJJgSJBNeRJSKtDXRFpnon7Fm14RYLRMu5");
-
-        // return [this.program.instruction.swap(swapParams.inAmount, this.priceLimit, this.xToY, {
-        //     accounts: {
-        //         state: stateAddress,
-        //         pool: poolAddress,
-        //         tokenX,
-        //         tokenY,
-        //         poolXAccount: this.pool.poolXAccount,
-        //         poolYAccount: this.pool.poolYAccount,
-        //         swapperXAccount,
-        //         swapperYAccount,
-        //         swapper: swapParams.userTransferAuthority,
-        //         referrerXAccount: this.referrerSourceTokenAccount,
-        //         referrerYAccount: this.referrerDestinationTokenAccount,
-        //         referrer: this.referrer,
-        //         programAuthority,
-        //         systemProgram: SystemProgram.programId,
-        //         tokenProgram: TOKEN_PROGRAM_ID,
-        //         associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
-        //         rent: SYSVAR_RENT_PUBKEY
-        //     },
-        // })];
+        // Unused as per Jupiters suggestion
         return [] as TransactionInstruction[];
     }
 }
