@@ -71,6 +71,7 @@ export interface PoolStructure {
     mercantiAmountY: Token;
     lpAccumulatorX: Token;
     lpAccumulatorY: Token;
+    farmCount: BN;
     bump: number;
 }
 
@@ -109,18 +110,33 @@ export default class MarcoPoloAMM implements Amm {
 
     // Stores the pubkeys of the tokenX and tokenY mints
     public reserveTokenMints: PublicKey[];
+
     // Stores the pool state
     public pool: PoolStructure;
-    // public tokenAccounts: PublicKey[];
+
+    // public tokenAccounts: PublicKey[]
 
     // Stores the pool address
     public poolAddress: PublicKey;
+    
     // Stores the programID
     private programID = new PublicKey("9tKE7Mbmj4mxDjWatikzGAtkoWosiiZX9y6J4Hfm2R8H");
+
     // Stores the programIDL for decoding the pool state
     private programIDL = IDL;
+
+    // Stores the programAuth for creating the swap instruction
+    private programAuthority = new PublicKey("JM78XNzeQRmZXDAP4DSq88ZdErbuSXSLE6fkRsVDKSu");
+
+    //Stores the state address for creating the swap instruction
+    private stateAddress = new PublicKey("BE5YRQ6N6LCw7UL3JwzVp317EWa4mzJY6JKDaudcXu7A");
+
+    //Stores the referrer wallet (Should be the Jupiter Ag Wallet)
+    private referrer = new PublicKey("MaPoNRu6RgbTkE978RYGuaXKobsciLLTDdgL6juqh68");
+
     // Stores the program for decoding the pool state
     private program: Program<Marcopolo>;
+
     //Stores the default denominator for the price calculation
     private DEFAULT_DENOMINATOR = new BN(10).pow(new BN(12));
 
@@ -132,7 +148,7 @@ export default class MarcoPoloAMM implements Amm {
     constructor(
         address: PublicKey, accountInfo: AccountInfo<Buffer>, params: MyParams
     ) {
-        this.programID = this.poolAddress = address;
+        this.poolAddress = address;
         this.programIDL = IDL;
         this.program = new Program(this.programIDL, this.programID, new AnchorProvider(new Connection("https://api.mainnet-beta.solana.com"), new Wallet(Keypair.generate()), AnchorProvider.defaultOptions()));
         this.pool = this.decodePoolState(accountInfo);
@@ -276,11 +292,12 @@ export default class MarcoPoloAMM implements Amm {
         const xToY = sourceMint.equals(tokenX);
 
         // If the swap is an x->y swap, the destination mint is tokenY, and vice versa
-        const destinationReserve = xToY ? tokenYReserve: tokenXReserve;
+        const destinationReserve = xToY ? tokenYReserve : tokenXReserve;
 
         // Gets the current price token Y to token X (not affected by the swap direction)
         const initialPrice = this.calculatePrice(tokenXReserve, tokenYReserve);
 
+        console.log("Initial Price: ", initialPrice.v.toString());
         // Converts the amount of sourceToken that will be swapped into a usable type
         const deltaIn = { v: new BN(amount.toString()) };
 
@@ -329,8 +346,88 @@ export default class MarcoPoloAMM implements Amm {
         this.pool = pool;
     }
 
+
+    private getAssociatedTokenAddressSync = (mint: PublicKey, owner: PublicKey): PublicKey => {
+        const [address] = PublicKey.findProgramAddressSync(
+            [owner.toBuffer(), TOKEN_PROGRAM_ID.toBuffer(), mint.toBuffer()],
+            ASSOCIATED_TOKEN_PROGRAM_ID
+        );
+        return address;
+    }
+
+    private getPriceAfterSlippage = (price: FixedPoint, slippage: FixedPoint, xToY: boolean): FixedPoint => {
+        if (xToY) {
+            return {
+                v: price.v
+                    .mul(this.DEFAULT_DENOMINATOR.sub(slippage.v))
+                    .div(this.DEFAULT_DENOMINATOR),
+            };
+        } else {
+            return {
+                v: price.v
+                    .mul(this.DEFAULT_DENOMINATOR.add(slippage.v))
+                    .div(this.DEFAULT_DENOMINATOR),
+            };
+        }
+    };
+
+    private toFixedPoint = (amount: BN, decimal: BN): FixedPoint => {
+        return {
+            v: amount.mul(this.DEFAULT_DENOMINATOR.div(new BN(10).pow(decimal))),
+        };
+    };
+
     public createSwapInstructions(swapParams: SwapParams): TransactionInstruction[] {
-        // Unused as per Jupiters suggestion
-        return [] as TransactionInstruction[];
+        const { sourceMint, destinationMint, inAmount, userSourceTokenAccount, userDestinationTokenAccount, userTransferAuthority } = swapParams;
+
+        // Dereferences the relevant pool state for easier readability
+        const { tokenX, tokenY, price, tokenXReserve, tokenYReserve } = this.pool;
+
+        // Checks if it's an X to Y or Y to X Swap based on source mint matching tokenX of the pool.
+        const xToY = sourceMint.equals(tokenX);
+
+        // Converts the amount in to a usable deltaIn
+        const deltaIn = { v: new BN(inAmount.toString()) };
+
+        // Assumes that the user has already approved the transfer, so the slippage is 100% (100 * 10**2)
+        const slippage = this.toFixedPoint(new BN(100), new BN(2));
+        // Gets the price after slippage
+        const priceLimit = this.getPriceAfterSlippage(price, slippage, xToY);
+
+        // Aligns the swapperX and swapperY accounts based on xToY
+        const swapperXAccount = xToY ? userSourceTokenAccount : userDestinationTokenAccount;
+        const swapperYAccount = xToY ? userDestinationTokenAccount : userSourceTokenAccount;
+
+        // Derives the referrer source and destination ATAs. The code creates the ATA if they don't exist, but it's recommended to create them beforehand anyways, such as with handling wrapped SOL.
+        const referrerSourceAccount = this.getAssociatedTokenAddressSync(sourceMint, this.referrer);
+        const referrerDestinationAccount = this.getAssociatedTokenAddressSync(destinationMint, this.referrer);
+
+
+        // Aligns the referrer x and y accounts based on xToY
+        const referrerXAccount = xToY ? referrerSourceAccount : referrerDestinationAccount;
+        const referrerYAccount = xToY ? referrerDestinationAccount : referrerSourceAccount;
+
+        const swapIX = this.program.instruction.swap(deltaIn, priceLimit, xToY, {
+            accounts: {
+                state: this.stateAddress,
+                pool: this.poolAddress,
+                tokenX,
+                tokenY,
+                poolXAccount: this.pool.poolXAccount,
+                poolYAccount: this.pool.poolYAccount,
+                swapperXAccount,
+                swapperYAccount,
+                swapper: userTransferAuthority,
+                referrerXAccount: referrerXAccount,
+                referrerYAccount: referrerYAccount,
+                referrer: this.referrer,
+                programAuthority: this.programAuthority,
+                systemProgram: SystemProgram.programId,
+                tokenProgram: TOKEN_PROGRAM_ID,
+                associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+                rent: SYSVAR_RENT_PUBKEY
+            },
+        });
+        return [swapIX] as TransactionInstruction[];
     }
 }

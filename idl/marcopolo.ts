@@ -233,10 +233,6 @@ export type Marcopolo = {
       ],
       "args": [
         {
-          "name": "bump",
-          "type": "u8"
-        },
-        {
           "name": "nonce",
           "type": "u8"
         }
@@ -277,6 +273,16 @@ export type Marcopolo = {
         },
         {
           "name": "tokenMarco",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProjectFirst",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProjectSecond",
           "isMut": true,
           "isSigner": false
         },
@@ -497,7 +503,7 @@ export type Marcopolo = {
         },
         {
           "name": "swapper",
-          "isMut": false,
+          "isMut": true,
           "isSigner": true
         },
         {
@@ -599,6 +605,16 @@ export type Marcopolo = {
           "isSigner": false
         },
         {
+          "name": "tokenProjectFirst",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProjectSecond",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
           "name": "poolXAccount",
           "isMut": true,
           "isSigner": false
@@ -650,7 +666,7 @@ export type Marcopolo = {
         },
         {
           "name": "owner",
-          "isMut": false,
+          "isMut": true,
           "isSigner": true
         },
         {
@@ -814,7 +830,7 @@ export type Marcopolo = {
         },
         {
           "name": "projectOwner",
-          "isMut": false,
+          "isMut": true,
           "isSigner": true
         },
         {
@@ -1205,6 +1221,16 @@ export type Marcopolo = {
           "isSigner": false
         },
         {
+          "name": "tokenProjectFirst",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProjectSecond",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
           "name": "tokenMarcoAccount",
           "isMut": true,
           "isSigner": false
@@ -1236,7 +1262,7 @@ export type Marcopolo = {
         },
         {
           "name": "owner",
-          "isMut": false,
+          "isMut": true,
           "isSigner": true
         },
         {
@@ -1393,7 +1419,7 @@ export type Marcopolo = {
         },
         {
           "name": "admin",
-          "isMut": false,
+          "isMut": true,
           "isSigner": true
         },
         {
@@ -2109,6 +2135,16 @@ export type Marcopolo = {
       "code": 6014,
       "name": "FarmNotEnded",
       "msg": "Farm has not ended, cannot add additional rewards"
+    },
+    {
+      "code": 6015,
+      "name": "ZeroAmount",
+      "msg": "Must provide a nonzero amount"
+    },
+    {
+      "code": 6016,
+      "name": "InvariantChanged",
+      "msg": "Invariant has changed"
     }
   ],
   "metadata": {
@@ -2351,10 +2387,6 @@ export const IDL: Marcopolo = {
       ],
       "args": [
         {
-          "name": "bump",
-          "type": "u8"
-        },
-        {
           "name": "nonce",
           "type": "u8"
         }
@@ -2395,6 +2427,16 @@ export const IDL: Marcopolo = {
         },
         {
           "name": "tokenMarco",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProjectFirst",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProjectSecond",
           "isMut": true,
           "isSigner": false
         },
@@ -2615,7 +2657,7 @@ export const IDL: Marcopolo = {
         },
         {
           "name": "swapper",
-          "isMut": false,
+          "isMut": true,
           "isSigner": true
         },
         {
@@ -2717,6 +2759,16 @@ export const IDL: Marcopolo = {
           "isSigner": false
         },
         {
+          "name": "tokenProjectFirst",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProjectSecond",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
           "name": "poolXAccount",
           "isMut": true,
           "isSigner": false
@@ -2768,7 +2820,7 @@ export const IDL: Marcopolo = {
         },
         {
           "name": "owner",
-          "isMut": false,
+          "isMut": true,
           "isSigner": true
         },
         {
@@ -2932,7 +2984,7 @@ export const IDL: Marcopolo = {
         },
         {
           "name": "projectOwner",
-          "isMut": false,
+          "isMut": true,
           "isSigner": true
         },
         {
@@ -3323,6 +3375,16 @@ export const IDL: Marcopolo = {
           "isSigner": false
         },
         {
+          "name": "tokenProjectFirst",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProjectSecond",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
           "name": "tokenMarcoAccount",
           "isMut": true,
           "isSigner": false
@@ -3354,7 +3416,7 @@ export const IDL: Marcopolo = {
         },
         {
           "name": "owner",
-          "isMut": false,
+          "isMut": true,
           "isSigner": true
         },
         {
@@ -3511,7 +3573,7 @@ export const IDL: Marcopolo = {
         },
         {
           "name": "admin",
-          "isMut": false,
+          "isMut": true,
           "isSigner": true
         },
         {
@@ -4227,6 +4289,16 @@ export const IDL: Marcopolo = {
       "code": 6014,
       "name": "FarmNotEnded",
       "msg": "Farm has not ended, cannot add additional rewards"
+    },
+    {
+      "code": 6015,
+      "name": "ZeroAmount",
+      "msg": "Must provide a nonzero amount"
+    },
+    {
+      "code": 6016,
+      "name": "InvariantChanged",
+      "msg": "Invariant has changed"
     }
   ],
   "metadata": {

@@ -4,7 +4,7 @@ import JSBI from "jsbi";
 import dotenv from "dotenv";
 import { getMint } from "@solana/spl-token";
 dotenv.config();
-const poolAddress = new PublicKey("7ZWeAB277CTSVxSmMxhGr4HM79YL65MVtDe4QTFGDdup");
+const poolAddress = new PublicKey("5DHywDf31Yx93Bh75Pb9djdwZpyK4nU1mJ9EUNnWZakL");
 const connection = new Connection(process.env.RPC_URL as string);
 
 const test = async () => {
@@ -22,7 +22,7 @@ const testXToYQuote = async (MPAmm:MarcoPoloAMM) => {
 
     const tokenIn = new PublicKey("DUSTawucrTsGU8hcqRdHDCbuYhCPADMLM2VcCb8VnFnQ");
     const tokenOut = new PublicKey("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v");
-    const amount = 10;
+    const amount = 1;
     const tokenInAmount = JSBI.BigInt(amount * (10** (await getMint(connection, tokenIn)).decimals));
 
     const quoteParams = {
@@ -43,7 +43,7 @@ const testYToXQuote = async (MPAmm:MarcoPoloAMM) => {
 
     const tokenIn = new PublicKey("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v");
     const tokenOut = new PublicKey("DUSTawucrTsGU8hcqRdHDCbuYhCPADMLM2VcCb8VnFnQ");
-    const amount = 10;
+    const amount = 1.27;
     const tokenInAmount = JSBI.BigInt(amount * (10** (await getMint(connection, tokenIn)).decimals));
 
     const quoteParams = {
